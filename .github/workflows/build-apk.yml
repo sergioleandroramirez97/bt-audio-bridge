@@ -1,15 +1,12 @@
 name: Build APK
 
-# Compila el APK de debug en la nube y lo publica como Release descargable.
-# Se dispara en cada push a main y también se puede correr a mano (Actions -> Run workflow).
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 permissions:
-  contents: write   # necesario para crear/actualizar el Release
+  contents: write
 
 jobs:
   build:
@@ -23,11 +20,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install SDK packages
-        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - name: Ensure SDK packages
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
 
       - name: Build debug APK
         working-directory: android
@@ -41,7 +37,6 @@ jobs:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      # Publica un Release fijo "latest" con el APK: link directo y estable para instalar.
       - name: Publish to Release (latest)
         uses: softprops/action-gh-release@v2
         with:
